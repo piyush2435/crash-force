@@ -1,5 +1,3 @@
-// JavaScript for Car Collision Simulation with Improved Structure and Momentum-Based Force Calculation
-
 const canvas = document.getElementById("simulationCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -11,7 +9,7 @@ let distance = 1000;
 let collisionDecision = 'collide';
 let forceCarOnObject = 0;
 let forceObjectOnCar = 0;
-const timeFactor = 0.1;  // Scale down speed to show smoother movement
+const timeFactor = 0.1; // Scale down speed to show smoother movement
 
 // Cloud properties
 let clouds = [
@@ -20,135 +18,152 @@ let clouds = [
     { x: 600, y: 60, speed: 0.4 }
 ];
 
-// Function to draw trees at intervals along the background
-function drawTrees() {
-    for (let i = 50; i < canvas.width; i += 200) {
-        // Draw tree trunk
-        ctx.fillStyle = "#8B4513";
-        ctx.fillRect(i, 250, 10, 50);
-        // Draw tree leaves
-        ctx.beginPath();
-        ctx.arc(i + 5, 240, 25, 0, Math.PI * 2);
-        ctx.fillStyle = "#006400";
-        ctx.fill();
-    }
-}
+// Tree properties
+let trees = [
+    { x: 100, y: 200, width: 10, height: 50 },
+    { x: 300, y: 200, width: 10, height: 50 },
+    { x: 500, y: 200, width: 10, height: 50 },
+];
 
-// Function to draw moving clouds
-function drawClouds() {
-    clouds.forEach(cloud => {
-        ctx.fillStyle = "#FFF";
+// Function to draw trees at specified positions
+function drawTrees() {
+    trees.forEach(tree => {
+        // Draw trunk
+        ctx.fillStyle = "#8B4513"; // Brown for trunk
+        ctx.fillRect(tree.x, tree.y, tree.width, tree.height); 
+
+        // Draw leaves
+        ctx.fillStyle = "#228B22"; // Green for leaves
         ctx.beginPath();
-        ctx.arc(cloud.x, cloud.y, 20, 0, Math.PI * 2);
-        ctx.arc(cloud.x + 25, cloud.y, 25, 0, Math.PI * 2);
-        ctx.arc(cloud.x + 50, cloud.y, 20, 0, Math.PI * 2);
+        ctx.arc(tree.x + 5, tree.y - 20, 25, 0, Math.PI * 2); 
         ctx.fill();
-        
-        cloud.x -= cloud.speed;
-        if (cloud.x < -50) cloud.x = canvas.width + 50;
     });
 }
 
-// Function to draw the road with lanes
-function drawRoad() {
-    ctx.fillStyle = "#707070";
-    ctx.fillRect(0, 200, canvas.width, 100);
+// Function to calculate forces based on momentum change
+function calculateForces() {
+    // Calculate change in momentum using m1u1 - m2v2
+    const initialMomentumCar = car.mass * car.initialVelocity;
+    const finalMomentumObject = object.mass * object.velocity;
+    const momentumChange = initialMomentumCar - finalMomentumObject;
 
-    ctx.strokeStyle = "#FFF";
-    ctx.setLineDash([20, 20]);
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, 250);
-    ctx.lineTo(canvas.width, 250);
-    ctx.stroke();
+    // Assume a time interval for the force calculation
+    const timeInterval = 1;  // Assume time for simplicity
+    forceCarOnObject = momentumChange / timeInterval;
+    forceObjectOnCar = -momentumChange / timeInterval;  // Equal and opposite reaction
+
+    // Display forces
+    displayForces();
 }
 
-// Function to draw a detailed car
-function drawCar() {
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(car.x, car.y, car.width, car.height);
-
-    // Car details: windows, headlights
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(car.x + 20, car.y + 10, 20, 20);  // Window 1
-    ctx.fillRect(car.x + 60, car.y + 10, 20, 20);  // Window 2
-    ctx.fillStyle = "#FFD700";
-    ctx.fillRect(car.x + car.width - 10, car.y + 15, 5, 5); // Headlight
-
-    // Car wheels
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.arc(car.x + 20, car.y + car.height, 10, 0, Math.PI * 2);
-    ctx.arc(car.x + 80, car.y + car.height, 10, 0, Math.PI * 2);
-    ctx.fill();
+// Function to display forces after collision
+function displayForces() {
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Force exerted by Car on Object: ${forceCarOnObject.toFixed(2)} N`, 50, 50);
+    ctx.fillText(`Force exerted by Object on Car: ${forceObjectOnCar.toFixed(2)} N`, 50, 80);
 }
 
-// Function to draw other objects based on type
-function drawObject() {
-    ctx.fillStyle = "#0000FF";
-    if (objectType === "person") {
-        ctx.fillRect(object.x, object.y - 25, object.width / 2, object.height);  // Body
-        ctx.beginPath();
-        ctx.arc(object.x + 12, object.y - 35, 10, 0, Math.PI * 2); // Head
-        ctx.fill();
-    } else if (objectType === "car" || objectType === "truck") {
-        ctx.fillRect(object.x, object.y, object.width, object.height);
-        // Wheels
-        ctx.fillStyle = "#333";
-        ctx.beginPath();
-        ctx.arc(object.x + 10, object.y + object.height, 10, 0, Math.PI * 2);
-        ctx.arc(object.x + object.width - 10, object.y + object.height, 10, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (objectType === "pole") {
-        ctx.fillRect(object.x, object.y - 50, object.width / 3, object.height + 50);
-    }
-}
-
-// Function to run the simulation
+// Simulation function to run with trees, cloud, and other elements
 function runSimulation() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawClouds();
-    drawTrees();
-    drawRoad();
-    drawCar();
-    drawObject();
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+    drawClouds(); // Draw clouds
+    drawTrees(); // Draw trees
+    drawRoad(); // Draw road
+    drawCar(); // Draw car
+    drawObject(); // Draw other objects
+
+    car.velocity = car.initialVelocity + car.acceleration * timeFactor;
+    object.velocity = object.initialVelocity + object.acceleration * timeFactor;
+
+    if (collisionDecision === "collide" && car.x + car.width < object.x) {
+        car.x += car.velocity * timeFactor; // Move car
+        object.x -= object.velocity * timeFactor; // Move object
+    } else if (collisionDecision === "avoid") {
+        ctx.fillStyle = 'green';
+        ctx.fillText("Collision avoided. Good job!", 20, 120);
+        return;
+    }
+
+    if (car.x + car.width >= object.x) {
+        calculateForces(); // Calculate forces based on collision
+    }
+
+    requestAnimationFrame(runSimulation); // Continue the simulation
+}
+
+// Start the simulation when the user inputs values
+document.getElementById("startSimulation").addEventListener("click", () => {
+    car.mass = parseFloat(document.getElementById("carMass").value);
+    car.acceleration = parseFloat(document.getElementById("carAcceleration").value);
+    car.initialVelocity = parseFloat(document.getElementById("carInitialVelocity").value);
+    object.mass = parseFloat(document.getElementById("objectMass").value);
+    object.acceleration = parseFloat(document.getElementById("objectAcceleration").value);
+    object.initialVelocity = parseFloat(document.getElementById("objectInitialVelocity").value);
+    distance = parseFloat(document.getElementById("objectDistance").value);
+    objectType = document.getElementById("objectType").value;
+    collisionDecision = document.getElementById("collisionDecision").value;
+    runSimulation(); // Start the simulation
+});
 
     // Apply time scaling for smoother movement
     car.velocity = car.initialVelocity + car.acceleration * timeFactor;
     object.velocity = object.initialVelocity + object.acceleration * timeFactor;
 
     if (collisionDecision === "collide" && car.x + car.width < object.x) {
-        car.x += car.velocity * timeFactor;
-        object.x -= object.velocity * timeFactor;
+        car.x += car.velocity * timeFactor; // Move car
+        object.x -= object.velocity * timeFactor; // Move object
     } else if (collisionDecision === "avoid") {
         const requiredDeceleration = car.velocity / (distance / car.velocity);
         ctx.fillStyle = 'black';
         ctx.fillText(`Collision avoided with deceleration: ${requiredDeceleration.toFixed(2)} m/s²`, 20, 50);
+        ctx.fillText(`Great decision to avoid the collision!`, 20, 80);
         return;
     }
 
     if (car.x + car.width >= object.x) {
-        calculateForces();
-        displayForces();
+        calculateForces(); // Calculate forces
+        displayForces(); // Display forces
+        explosionVisible = true; // Trigger explosion display
     }
 
-    requestAnimationFrame(runSimulation);
+    if (explosionVisible) {
+        drawExplosion(forceCarOnObject); // Draw explosion
+    }
+
+    requestAnimationFrame(runSimulation); // Continue the simulation
 }
 
-// Function to calculate forces and change in momentum
+// Function to calculate forces based on the new velocity equations
 function calculateForces() {
-    const initialMomentumCar = car.mass * car.initialVelocity;
-    const finalMomentumCar = car.mass * car.velocity;
-    const momentumChangeCar = finalMomentumCar - initialMomentumCar;
+    // Calculate final velocity for the car and the object
+    const carDistance = distance; // Distance to collision
+    const objectDistance = distance; // Distance to collision for object
 
-    const initialMomentumObject = object.mass * object.initialVelocity;
-    const finalMomentumObject = object.mass * object.velocity;
-    const momentumChangeObject = finalMomentumObject - initialMomentumObject;
+    const finalVelocityCar = Math.sqrt(Math.pow(car.initialVelocity, 2) + 2 * car.acceleration * carDistance);
+    const finalVelocityObject = Math.sqrt(Math.pow(object.initialVelocity, 2) + 2 * object.acceleration * objectDistance);
 
-    const timeInterval = 1;  // Assumed time interval for collision in seconds
-    forceCarOnObject = momentumChangeCar / timeInterval;
-    forceObjectOnCar = momentumChangeObject / timeInterval;
+    // Calculate the time taken using v = u + at
+    const timeIntervalCar = (finalVelocityCar - car.initialVelocity) / car.acceleration;
+    const timeIntervalObject = (finalVelocityObject - object.initialVelocity) / object.acceleration;
+
+    // Change in momentum for the car
+    const momentumChangeCar = car.mass * finalVelocityCar - car.mass * car.initialVelocity;
+
+    // Change in momentum for the object
+    const momentumChangeObject = object.mass * finalVelocityObject - object.mass * object.initialVelocity;
+
+    // Calculate forces
+    forceCarOnObject = momentumChangeCar / timeIntervalCar;
+    forceObjectOnCar = momentumChangeObject / timeIntervalObject;
+
+    // Display precautions based on speed
+    if (finalVelocityCar > 30) {
+        ctx.fillStyle = 'black';
+        ctx.fillText(`Precaution: Drive Safely,someone is waiting for you at home !`, 20, 120);
+    }
 }
+
 
 // Function to display forces after collision
 function displayForces() {
@@ -169,5 +184,5 @@ document.getElementById("startSimulation").addEventListener("click", () => {
     distance = parseFloat(document.getElementById("objectDistance").value);
     objectType = document.getElementById("objectType").value;
     collisionDecision = document.getElementById("collisionDecision").value;
-    runSimulation();
+    runSimulation(); // Start the simulation
 });
